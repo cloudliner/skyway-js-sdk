@@ -2,6 +2,7 @@ $(function() {
   let localStream = null;
   let peer = null;
   let exsistingCall = null;
+  let remoteStream = null;
 
   const audioSelect = $('#audioSource');
   const videoSelect = $('#videoSource');
@@ -117,7 +118,8 @@ $(function() {
       addVideo(call, stream);
     });
     call.on('stream', function(stream) {
-      addVideo(stream);
+      addVideo(call, stream);
+      remoteStream = stream;
     });
     call.on('removeStream', function(stream) {
       removeVideo(stream.peerId);
@@ -154,10 +156,44 @@ $(function() {
   function setupMakeCallUI() {
     $('#make-call').show();
     $('#end-call').hide();
+    $('#recording').hide();
   }
 
   function setupEndCallUI() {
     $('make-call').hide();
     $('#end-call').show();
+    $('#recording').show();
   }
+
+  let recorder = null;
+  $('#recording button').click(function() {
+    if (recorder) {
+      recorder.stop();
+      $('#recording button').text('Recording');
+      $('#downloadlink').hide();
+    } else if (remoteStream) {
+      const chunks = [];
+      const options = {
+        mimeType: 'video/webm; codecs=vp9',
+      };
+      recorder = new MediaRecorder(remoteStream, options);
+      recorder.ondataavailable = function(evt) {
+        console.log("data available: evt.data.type=" + evt.data.type + " size=" + evt.data.size);
+        chunks.push(evt.data);
+      };
+      recorder.onstop = function(evt) {
+        console.log('recorder.onstop, so playback');
+        recorder = null;
+        const videoBlob = new Blob(chunks, { type: "video/webm" });
+        const blobUrl = window.URL.createObjectURL(videoBlob);
+        $('#downloadlink').attr("download", 'recorded.webm');
+        $('#downloadlink').attr("href", blobUrl);
+        $('#downloadlink').show();
+      };
+      recorder.start(1000);
+      console.log('start recording');
+      $('#recording button').text('Stop');
+      $('#downloadlink').hide();
+    }
+  });
 });

@@ -28,14 +28,19 @@
         <input type="text" placeholder="Join room..." id="join-room">
         <button type="submit">Call</button>
     </form>
-    <form id="end-call">
+    <div id="end-call">
         <!--
         <p>Currently in call with <span id="connected-peer-id">...</span></p>
         <button type="submit">End Call</button>
         -->
         <p>Currently in room <span id="room-id">...</span></p>
         <button type="submit">Leave</button>
-    </form>
+    </div>
+    <div id="recording">
+        <button>Recording</button>
+        <a href="#" id="downloadlink">Download</a>
+        <p>＊1:1の場合にリモートを録画可能</p>
+    </div>
 </div>
 
 </body>
