@@ -3,14 +3,20 @@ $(function() {
   let peer = null;
   let exsistingCall = null;
 
+  let constraints = {
+    video: {},
+    audio: true,
+  };
+  constraints.video.width = {
+    min: 320,
+    max: 320,
+  };
+  constraints.video.height = {
+    min: 240,
+    height: 240,
+  };
   navigator.mediaDevices
-    .getUserMedia({
-      audio: true,
-      video: {
-        width: { min: 640, ideal: 1280 },
-        height: { min: 480, ideal: 720 },
-      },
-    })
+    .getUserMedia(constraints)
     .then(function(stream) {
       $('#myStream').get(0).srcObject = stream;
       localStream = stream;
@@ -40,7 +46,17 @@ $(function() {
 
   $('#make-call').submit(function(e) {
     e.preventDefault();
+
+    /*
     const call = peer.call($('#peer-id').val(), localStream);
+     */
+
+    const roomName = $('#join-room').val();
+    if (!roomName) {
+      return;
+    }
+    const call = peer.joinRoom(roomName, { mode: 'sfu', stream: localStream});
+
     setupCallEventHandlers(call);
   });
 
@@ -53,6 +69,8 @@ $(function() {
       exsistingCall.close();
     }
     exsistingCall = call;
+
+    /*
     call.on('stream', function(stream) {
       addVideo(call, stream);
       setupEndCallUI();
@@ -62,17 +80,40 @@ $(function() {
       removeVideo(call.remoteId);
       setupMakeCallUI();
     });
+     */
+
+    setupEndCallUI();
+    $('#room-id').text(call.name);
+    call.on('stream', function(stream) {
+      addVideo(call, stream);
+    });
+    call.on('peerLeave', function(peerId) {
+      removeVideo(peerId);
+    });
+    call.on('close', function() {
+      removeAllRemoteViedos();
+      setupMakeCallUI();
+    });
   }
 
   function addVideo(call, stream) {
     const videoDom = $('<video autoplay>');
+
+    /*
     videoDom.attr('id', call.remoteId);
+     */
+
+    videoDom.attr('id', stream.peerId);
     videoDom.get(0).srcObject = stream;
     $('.videosContainer').append(videoDom);
   }
 
   function removeVideo(peerId) {
     $('#' + peerId).remove();
+  }
+
+  function removeAllRemoteViedos() {
+    $('.videosContainer').empty();
   }
 
   function setupMakeCallUI() {
